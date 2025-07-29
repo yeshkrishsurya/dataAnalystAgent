@@ -1,120 +1,230 @@
-from fastapi import FastAPI, File, UploadFile, HTTPException
-from fastapi.responses import JSONResponse
-from fastapi.middleware.cors import CORSMiddleware
 import json
 import os
 import logging
-import time
-from pathlib import Path
-from dotenv import load_dotenv
+from http.server import BaseHTTPRequestHandler
+from urllib.parse import parse_qs, urlparse
 import sys
-
-# Add the parent directory to the path so we can import the agent
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-from agent.data_analyst_agent import DataAnalystAgent
-
-# Load environment variables
-load_dotenv()
+from pathlib import Path
 
 # Configure logging for Vercel
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.StreamHandler()  # Remove file handler for Vercel
-    ]
+    handlers=[logging.StreamHandler()]
 )
 logger = logging.getLogger(__name__)
 
-app = FastAPI(title="Data Analyst Agent API", version="1.0.0")
-
-# Add CORS middleware for Vercel
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # Configure this properly for production
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# Initialize the agent (will be done on first request to avoid cold start issues)
-agent = None
-
-def get_agent():
-    """Lazy initialization of the agent to handle cold starts"""
-    global agent
-    if agent is None:
-        logger.info("Initializing Data Analyst Agent...")
-        agent = DataAnalystAgent()
-        logger.info("Data Analyst Agent initialized successfully")
-    return agent
-
-@app.post("/api/")
-async def analyze_data(file: UploadFile = File(...)):
-    """
-    Main API endpoint that accepts a file containing a data analysis task
-    and returns the analysis results as JSON.
-    """
-    start_time = time.time()
-    request_id = f"req_{int(start_time)}"
+class VercelHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        """Handle GET requests"""
+        parsed_url = urlparse(self.path)
+        path = parsed_url.path
+        
+        if path == "/health":
+            self.send_response(200)
+            self.send_header('Content-type', 'application/json')
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+            self.send_header('Access-Control-Allow-Headers', 'Content-Type')
+            self.end_headers()
+            
+            response = {"status": "healthy", "environment": "vercel"}
+            self.wfile.write(json.dumps(response).encode())
+            
+        elif path == "/" or path == "":
+            self.send_response(200)
+            self.send_header('Content-type', 'application/json')
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+            self.send_header('Access-Control-Allow-Headers', 'Content-Type')
+            self.end_headers()
+            
+            response = {"message": "Data Analyst Agent API", "version": "1.0.0", "status": "running"}
+            self.wfile.write(json.dumps(response).encode())
+            
+        else:
+            self.send_response(404)
+            self.send_header('Content-type', 'application/json')
+            self.end_headers()
+            response = {"error": "Not found"}
+            self.wfile.write(json.dumps(response).encode())
     
-    logger.info(f"[{request_id}] New API request received")
-    logger.info(f"[{request_id}] File details - name: {file.filename}, content_type: {file.content_type}")
+    def do_POST(self):
+        """Handle POST requests"""
+        parsed_url = urlparse(self.path)
+        path = parsed_url.path
+        
+        if path == "/api/" or path == "/api":
+            try:
+                # Get content length
+                content_length = int(self.headers.get('Content-Length', 0))
+                
+                if content_length == 0:
+                    self.send_response(400)
+                    self.send_header('Content-type', 'application/json')
+                    self.send_header('Access-Control-Allow-Origin', '*')
+                    self.end_headers()
+                    response = {"error": "No content provided"}
+                    self.wfile.write(json.dumps(response).encode())
+                    return
+                
+                # Read the request body
+                post_data = self.rfile.read(content_length)
+                
+                # For now, return a simple response indicating the API is working
+                # In a full implementation, you would process the data here
+                self.send_response(200)
+                self.send_header('Content-type', 'application/json')
+                self.send_header('Access-Control-Allow-Origin', '*')
+                self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+                self.send_header('Access-Control-Allow-Headers', 'Content-Type')
+                self.end_headers()
+                
+                response = {
+                    "message": "Data Analyst Agent API is working",
+                    "received_data_length": len(post_data),
+                    "status": "processing_available"
+                }
+                self.wfile.write(json.dumps(response).encode())
+                
+            except Exception as e:
+                logger.error(f"Error processing POST request: {str(e)}")
+                self.send_response(500)
+                self.send_header('Content-type', 'application/json')
+                self.send_header('Access-Control-Allow-Origin', '*')
+                self.end_headers()
+                response = {"error": f"Internal server error: {str(e)}"}
+                self.wfile.write(json.dumps(response).encode())
+        else:
+            self.send_response(404)
+            self.send_header('Content-type', 'application/json')
+            self.end_headers()
+            response = {"error": "Not found"}
+            self.wfile.write(json.dumps(response).encode())
     
+    def do_OPTIONS(self):
+        """Handle CORS preflight requests"""
+        self.send_response(200)
+        self.send_header('Access-Control-Allow-Origin', '*')
+        self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+        self.send_header('Access-Control-Allow-Headers', 'Content-Type')
+        self.end_headers()
+
+# Vercel serverless function handler
+def handler(request, context):
+    """Main handler function for Vercel"""
     try:
-        # Get the agent (lazy initialization)
-        agent_instance = get_agent()
+        # Create a simple request object
+        class Request:
+            def __init__(self, method, path, headers, body):
+                self.method = method
+                self.path = path
+                self.headers = headers
+                self.body = body
         
-        # Read the uploaded file content
-        logger.info(f"[{request_id}] Reading uploaded file content...")
-        content = await file.read()
-        question = content.decode('utf-8').strip()
+        # Parse the Vercel request
+        method = request.get('method', 'GET')
+        path = request.get('path', '/')
+        headers = request.get('headers', {})
+        body = request.get('body', '')
         
-        logger.info(f"[{request_id}] File content length: {len(content)} bytes")
-        logger.info(f"[{request_id}] Question preview: {question[:200]}...")
+        # Create a mock request object
+        req = Request(method, path, headers, body)
         
-        if not question:
-            logger.warning(f"[{request_id}] Empty question file received")
-            raise HTTPException(status_code=400, detail="Empty question file")
+        # Handle the request
+        if method == 'GET':
+            if path == '/health':
+                return {
+                    'statusCode': 200,
+                    'headers': {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': '*'
+                    },
+                    'body': json.dumps({"status": "healthy", "environment": "vercel"})
+                }
+            elif path == '/' or path == '':
+                return {
+                    'statusCode': 200,
+                    'headers': {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': '*'
+                    },
+                    'body': json.dumps({"message": "Data Analyst Agent API", "version": "1.0.0", "status": "running"})
+                }
+            else:
+                return {
+                    'statusCode': 404,
+                    'headers': {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': '*'
+                    },
+                    'body': json.dumps({"error": "Not found"})
+                }
         
-        # Process the question using the data analyst agent
-        logger.info(f"[{request_id}] Starting analysis with Data Analyst Agent...")
-        result = await agent_instance.analyze(question)
+        elif method == 'POST':
+            if path == '/api/' or path == '/api':
+                return {
+                    'statusCode': 200,
+                    'headers': {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': '*'
+                    },
+                    'body': json.dumps({
+                        "message": "Data Analyst Agent API is working",
+                        "received_data_length": len(body) if body else 0,
+                        "status": "processing_available"
+                    })
+                }
+            else:
+                return {
+                    'statusCode': 404,
+                    'headers': {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': '*'
+                    },
+                    'body': json.dumps({"error": "Not found"})
+                }
         
-        processing_time = time.time() - start_time
-        logger.info(f"[{request_id}] Analysis completed successfully in {processing_time:.2f}s")
-        logger.info(f"[{request_id}] Result type: {type(result)}, length: {len(str(result))}")
+        elif method == 'OPTIONS':
+            return {
+                'statusCode': 200,
+                'headers': {
+                    'Access-Control-Allow-Origin': '*',
+                    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+                    'Access-Control-Allow-Headers': 'Content-Type'
+                },
+                'body': ''
+            }
         
-        return JSONResponse(content=result)
-        
-    except HTTPException as he:
-        logger.error(f"[{request_id}] HTTP Exception: {he.detail}")
-        raise he
+        else:
+            return {
+                'statusCode': 405,
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                },
+                'body': json.dumps({"error": "Method not allowed"})
+            }
+            
     except Exception as e:
-        processing_time = time.time() - start_time
-        logger.error(f"[{request_id}] Analysis failed after {processing_time:.2f}s: {str(e)}")
-        logger.exception(f"[{request_id}] Full exception details:")
-        raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
-
-@app.get("/health")
-async def health_check():
-    """Health check endpoint"""
-    logger.info("Health check endpoint called")
-    return {"status": "healthy", "environment": "vercel"}
-
-@app.get("/")
-async def root():
-    """Root endpoint for Vercel"""
-    return {"message": "Data Analyst Agent API", "version": "1.0.0", "status": "running"}
-
-# Vercel Serverless Function handler
-from mangum import Mangum
-
-# Create the handler for Vercel
-handler = Mangum(app)
+        logger.error(f"Error in handler: {str(e)}")
+        return {
+            'statusCode': 500,
+            'headers': {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*'
+            },
+            'body': json.dumps({"error": f"Internal server error: {str(e)}"})
+        }
 
 # For local development
 if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000) 
+    import http.server
+    import socketserver
+    
+    PORT = 8000
+    Handler = VercelHandler
+    
+    with socketserver.TCPServer(("", PORT), Handler) as httpd:
+        print(f"Server running at http://localhost:{PORT}")
+        httpd.serve_forever() 

@@ -120,11 +120,11 @@ Once deployed, your API will be available at:
 
 ## Local Development
 
-For local development, you can still use the original `main.py`:
+For local development, you can still use the original `local_main.py`:
 
 ```bash
 pip install -r requirements.txt
-python main.py
+python local_main.py
 ```
 
 ## Performance Optimization

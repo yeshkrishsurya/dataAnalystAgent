@@ -7,7 +7,7 @@ __pycache__/
 htmlcov/
 
 # Local development files
-main.py
+local_main.py
 run.py
 run_tester.bat
 endpoint_tester.py

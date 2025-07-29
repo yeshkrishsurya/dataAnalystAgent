@@ -32,7 +32,7 @@ A generalist data analysis agent built with LangChain and Azure OpenAI API. This
 
 3. **Run the API**:
    ```bash
-   python main.py
+   python local_main.py
    ```
    
    The API will be available at `http://localhost:8000`
@@ -99,7 +99,7 @@ npm install -g vercel
 For local development, use the original setup:
 ```bash
 pip install -r requirements.txt
-python main.py
+python local_main.py
 ```
 
 ## License
