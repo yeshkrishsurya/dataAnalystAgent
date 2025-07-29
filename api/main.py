@@ -108,6 +108,12 @@ async def root():
     """Root endpoint for Vercel"""
     return {"message": "Data Analyst Agent API", "version": "1.0.0", "status": "running"}
 
+# Vercel Serverless Function handler
+from mangum import Mangum
+
+# Create the handler for Vercel
+handler = Mangum(app)
+
 # For local development
 if __name__ == "__main__":
     import uvicorn

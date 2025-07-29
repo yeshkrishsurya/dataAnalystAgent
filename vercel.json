@@ -12,6 +12,10 @@
     {
       "src": "/health",
       "dest": "/api/main.py"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/api/main.py"
     }
   ],
   "env": {

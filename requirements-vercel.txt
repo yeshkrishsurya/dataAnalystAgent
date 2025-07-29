@@ -17,4 +17,5 @@ python-multipart==0.0.6
 pydantic==2.5.0
 aiofiles==0.23.0
 python-dotenv==1.0.0
-Pillow==9.0.0 
+Pillow==9.0.0
+mangum==0.17.0 
