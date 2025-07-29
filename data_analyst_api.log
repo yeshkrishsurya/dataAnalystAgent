@@ -1,0 +1,65 @@
+2025-07-30 00:50:16,128 - __main__ - INFO - Initializing Data Analyst Agent...
+2025-07-30 00:50:16,128 - agent.data_analyst_agent - INFO - Setting up Data Analyst Agent components...
+2025-07-30 00:50:16,128 - agent.data_analyst_agent - INFO - Setting up Azure OpenAI LLM...
+2025-07-30 00:50:16,128 - agent.data_analyst_agent - INFO - Azure endpoint: https://yeshsurya1.openai.azure.com/
+2025-07-30 00:50:16,128 - agent.data_analyst_agent - INFO - Deployment name: gpt-4o-mini
+2025-07-30 00:50:16,695 - agent.data_analyst_agent - INFO - Setting up LangChain agent with tools...
+2025-07-30 00:50:16,723 - agent.data_analyst_agent - INFO - Agent created with 6 tools
+2025-07-30 00:50:16,723 - agent.data_analyst_agent - INFO - Data Analyst Agent setup completed
+2025-07-30 00:50:16,723 - __main__ - INFO - Data Analyst Agent initialized successfully
+2025-07-30 00:50:20,609 - __main__ - INFO - Health check endpoint called
+2025-07-30 00:50:29,036 - __main__ - INFO - [req_1753816829] New API request received
+2025-07-30 00:50:29,036 - __main__ - INFO - [req_1753816829] File details - name: question.txt, content_type: text/plain
+2025-07-30 00:50:29,036 - __main__ - INFO - [req_1753816829] Reading uploaded file content...
+2025-07-30 00:50:29,036 - __main__ - INFO - [req_1753816829] File content length: 596 bytes
+2025-07-30 00:50:29,036 - __main__ - INFO - [req_1753816829] Question preview: Scrape the list of highest grossing films from Wikipedia. It is at the URL:
+https://en.wikipedia.org/wiki/List_of_highest-grossing_films
+
+Answer the following questions and respond with a JSON arra...
+2025-07-30 00:50:29,036 - __main__ - INFO - [req_1753816829] Starting analysis with Data Analyst Agent...
+2025-07-30 00:50:29,036 - agent.data_analyst_agent - INFO - Starting analysis for question: Scrape the list of highest grossing films from Wikipedia. It is at the URL:
+https://en.wikipedia.or...
+2025-07-30 00:50:29,036 - agent.data_analyst_agent - INFO - Invoking LangChain agent executor...
+2025-07-30 00:50:31,476 - httpx - INFO - HTTP Request: POST https://yeshsurya1.openai.azure.com/openai/deployments/gpt-4o-mini/chat/completions?api-version=2025-01-01-preview "HTTP/1.1 200 OK"
+2025-07-30 00:50:53,997 - httpx - INFO - HTTP Request: POST https://yeshsurya1.openai.azure.com/openai/deployments/gpt-4o-mini/chat/completions?api-version=2025-01-01-preview "HTTP/1.1 200 OK"
+2025-07-30 00:51:01,331 - httpx - INFO - HTTP Request: POST https://yeshsurya1.openai.azure.com/openai/deployments/gpt-4o-mini/chat/completions?api-version=2025-01-01-preview "HTTP/1.1 200 OK"
+2025-07-30 00:51:31,716 - agent.data_analyst_agent - INFO - Agent execution completed. Result keys: ['input', 'output']
+2025-07-30 00:51:31,716 - agent.data_analyst_agent - INFO - Raw output length: 6353 characters
+2025-07-30 00:51:31,716 - agent.data_analyst_agent - INFO - Raw output preview: ```json
+[
+    "There are 6 movies that grossed over $2 billion before 2020.",
+    "The earliest film that grossed over $1.5 billion is Titanic, released in 1997.",
+    "The correlation between Rank an...
+2025-07-30 00:51:31,716 - agent.data_analyst_agent - WARNING - Failed to parse output as JSON: Expecting value: line 1 column 1 (char 0)
+2025-07-30 00:51:31,716 - __main__ - INFO - [req_1753816829] Analysis completed successfully in 62.68s
+2025-07-30 00:51:31,716 - __main__ - INFO - [req_1753816829] Result type: <class 'dict'>, length: 6372
+2025-07-30 00:56:11,214 - __main__ - INFO - [req_1753817171] New API request received
+2025-07-30 00:56:11,214 - __main__ - INFO - [req_1753817171] File details - name: question.txt, content_type: text/plain
+2025-07-30 00:56:11,214 - __main__ - INFO - [req_1753817171] Reading uploaded file content...
+2025-07-30 00:56:11,214 - __main__ - INFO - [req_1753817171] File content length: 779 bytes
+2025-07-30 00:56:11,214 - __main__ - INFO - [req_1753817171] Question preview: The Indian high court judgement dataset contains judgements from the Indian High Courts.
+
+This DuckDB query counts the number of decisions in the dataset:
+
+SELECT COUNT(*) FROM read_parquet('s3://...
+2025-07-30 00:56:11,214 - __main__ - INFO - [req_1753817171] Starting analysis with Data Analyst Agent...
+2025-07-30 00:56:11,214 - agent.data_analyst_agent - INFO - Starting analysis for question: The Indian high court judgement dataset contains judgements from the Indian High Courts.
+
+This Duc...
+2025-07-30 00:56:11,214 - agent.data_analyst_agent - INFO - Invoking LangChain agent executor...
+2025-07-30 00:56:14,365 - httpx - INFO - HTTP Request: POST https://yeshsurya1.openai.azure.com/openai/deployments/gpt-4o-mini/chat/completions?api-version=2025-01-01-preview "HTTP/1.1 200 OK"
+2025-07-30 00:56:24,608 - httpx - INFO - HTTP Request: POST https://yeshsurya1.openai.azure.com/openai/deployments/gpt-4o-mini/chat/completions?api-version=2025-01-01-preview "HTTP/1.1 200 OK"
+2025-07-30 00:56:31,988 - httpx - INFO - HTTP Request: POST https://yeshsurya1.openai.azure.com/openai/deployments/gpt-4o-mini/chat/completions?api-version=2025-01-01-preview "HTTP/1.1 200 OK"
+2025-07-30 00:56:39,605 - httpx - INFO - HTTP Request: POST https://yeshsurya1.openai.azure.com/openai/deployments/gpt-4o-mini/chat/completions?api-version=2025-01-01-preview "HTTP/1.1 200 OK"
+2025-07-30 00:56:46,702 - httpx - INFO - HTTP Request: POST https://yeshsurya1.openai.azure.com/openai/deployments/gpt-4o-mini/chat/completions?api-version=2025-01-01-preview "HTTP/1.1 200 OK"
+2025-07-30 00:56:53,859 - httpx - INFO - HTTP Request: POST https://yeshsurya1.openai.azure.com/openai/deployments/gpt-4o-mini/chat/completions?api-version=2025-01-01-preview "HTTP/1.1 200 OK"
+2025-07-30 00:57:00,921 - httpx - INFO - HTTP Request: POST https://yeshsurya1.openai.azure.com/openai/deployments/gpt-4o-mini/chat/completions?api-version=2025-01-01-preview "HTTP/1.1 200 OK"
+2025-07-30 00:57:07,962 - httpx - INFO - HTTP Request: POST https://yeshsurya1.openai.azure.com/openai/deployments/gpt-4o-mini/chat/completions?api-version=2025-01-01-preview "HTTP/1.1 200 OK"
+2025-07-30 00:57:16,872 - httpx - INFO - HTTP Request: POST https://yeshsurya1.openai.azure.com/openai/deployments/gpt-4o-mini/chat/completions?api-version=2025-01-01-preview "HTTP/1.1 200 OK"
+2025-07-30 00:57:24,616 - httpx - INFO - HTTP Request: POST https://yeshsurya1.openai.azure.com/openai/deployments/gpt-4o-mini/chat/completions?api-version=2025-01-01-preview "HTTP/1.1 200 OK"
+2025-07-30 00:57:29,694 - agent.data_analyst_agent - INFO - Agent execution completed. Result keys: ['input', 'output']
+2025-07-30 00:57:29,694 - agent.data_analyst_agent - INFO - Raw output length: 36 characters
+2025-07-30 00:57:29,694 - agent.data_analyst_agent - INFO - Raw output preview: Agent stopped due to max iterations....
+2025-07-30 00:57:29,694 - agent.data_analyst_agent - WARNING - Failed to parse output as JSON: Expecting value: line 1 column 1 (char 0)
+2025-07-30 00:57:29,695 - __main__ - INFO - [req_1753817171] Analysis completed successfully in 78.48s
+2025-07-30 00:57:29,695 - __main__ - INFO - [req_1753817171] Result type: <class 'dict'>, length: 50

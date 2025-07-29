@@ -1,0 +1,36 @@
+# Development files
+*.log
+*.pyc
+__pycache__/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Local development files
+main.py
+run.py
+run_tester.bat
+endpoint_tester.py
+gui_tester.py
+test_*.py
+test_*.txt
+
+# Documentation
+README.md
+README-VERCEL.md
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp 
