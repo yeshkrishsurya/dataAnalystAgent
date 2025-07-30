@@ -1,36 +1,57 @@
-# Development files
-*.log
-*.pyc
-__pycache__/
-.pytest_cache/
-.coverage
-htmlcov/
-
-# Local development files
-local_main.py
-run.py
-run_tester.bat
-endpoint_tester.py
-gui_tester.py
-test_*.py
-test_*.txt
-
-# Documentation
-README.md
-README-VERCEL.md
-
-# Git
+# Git files
 .git/
 .gitignore
 
-# IDE
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# IDE files
 .vscode/
 .idea/
+*.swp
+*.swo
 
-# OS
+# OS files
 .DS_Store
 Thumbs.db
 
-# Temporary files
-*.tmp
-*.temp 
+# Logs
+*.log
+logs/
+
+# Test files
+test_*.py
+*_test.py
+tests/
+
+# Documentation
+README.md
+*.md
+
+# Local development files
+local_main.py
+gui_tester.py
+endpoint_tester.py
+test_base64_viewer.py
+test-vercel.py
+run_tester.bat
+run.py
+
+# Data files (if any)
+*.csv
+*.json
+*.xlsx
+*.db
+
+# Heavy dependencies (will be installed from requirements-vercel.txt)
+# Keep the original requirements.txt for local development 

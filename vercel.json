@@ -1,5 +1,13 @@
 {
-  "builds": [{"src":"api/main.py","use":"@vercel/python"}],
+  "builds": [
+    {
+      "src": "api/main.py",
+      "use": "@vercel/python",
+      "config": {
+        "maxLambdaSize": "250mb"
+      }
+    }
+  ],
   "routes": [
     {
       "src": "/api/(.*)",
@@ -16,5 +24,10 @@
   ],
   "env": {
     "PYTHONPATH": "."
+  },
+  "functions": {
+    "api/main.py": {
+      "maxDuration": 30
+    }
   }
 } 

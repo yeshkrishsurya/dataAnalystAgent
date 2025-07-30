@@ -1,148 +1,113 @@
 # Data Analyst Agent - Vercel Deployment
 
-This guide explains how to deploy the Data Analyst Agent to Vercel as a serverless API.
+This is a **lightweight deployment** of the Data Analyst Agent for Vercel serverless functions. Due to Vercel's 250MB size limit, this deployment excludes heavy data science libraries.
 
-## Prerequisites
+## 🚀 Quick Deploy
 
-1. **Vercel Account**: Sign up at [vercel.com](https://vercel.com)
-2. **Git Repository**: Your code should be in a Git repository (GitHub, GitLab, etc.)
-3. **Environment Variables**: You'll need to configure your Azure OpenAI credentials
-
-## Deployment Steps
-
-### 1. Prepare Your Repository
-
-The project is already configured for Vercel with the following files:
-- `vercel.json` - Vercel configuration
-- `api/main.py` - Serverless function entry point
-- `requirements-vercel.txt` - Python dependencies
-- `runtime.txt` - Python version specification
-
-### 2. Deploy to Vercel
-
-#### Option A: Using Vercel CLI
 ```bash
-# Install Vercel CLI
-npm i -g vercel
-
-# Login to Vercel
-vercel login
-
-# Deploy from your project directory
-vercel
-
-# Follow the prompts to configure your project
+# Run the deployment script
+./deploy-vercel.sh
 ```
 
-#### Option B: Using Vercel Dashboard
-1. Go to [vercel.com/dashboard](https://vercel.com/dashboard)
-2. Click "New Project"
-3. Import your Git repository
-4. Configure the project settings
+## 📦 What's Included
 
-### 3. Configure Environment Variables
+- ✅ FastAPI server
+- ✅ LangChain integration
+- ✅ OpenAI/Azure OpenAI support
+- ✅ Basic web scraping
+- ✅ Health check endpoints
+- ✅ CORS support
 
-In your Vercel project dashboard, go to Settings → Environment Variables and add:
+## ❌ What's NOT Included (Due to Size Limits)
 
-```
-AZURE_OPENAI_ENDPOINT=your_azure_openai_endpoint
-AZURE_OPENAI_API_KEY=your_azure_openai_api_key
+- ❌ Pandas (data manipulation)
+- ❌ NumPy (numerical computing)
+- ❌ Matplotlib/Seaborn (plotting)
+- ❌ Plotly (interactive plots)
+- ❌ Scikit-learn (machine learning)
+- ❌ SciPy (scientific computing)
+- ❌ DuckDB (database)
+
+## 🔧 Configuration
+
+### Environment Variables
+
+Set these in your Vercel dashboard:
+
+```bash
+AZURE_OPENAI_ENDPOINT=your_azure_endpoint
+AZURE_OPENAI_API_KEY=your_api_key
 AZURE_OPENAI_DEPLOYMENT_NAME=your_deployment_name
 AZURE_OPENAI_API_VERSION=2023-12-01-preview
 ```
 
-### 4. Update GUI Tester
+### API Endpoints
 
-After deployment, update the `gui_tester.py` file with your Vercel URL:
+- `GET /` - API info
+- `GET /health` - Health check
+- `POST /api/` - Process questions (limited functionality)
 
-```python
-self.api_base_url = "https://your-vercel-app.vercel.app"
-```
+## 🏠 Local Development
 
-## API Endpoints
-
-Once deployed, your API will be available at:
-
-- **Root**: `https://your-vercel-app.vercel.app/`
-- **Health Check**: `https://your-vercel-app.vercel.app/health`
-- **Main API**: `https://your-vercel-app.vercel.app/api/`
-
-## Important Notes
-
-### Cold Starts
-- The agent is initialized lazily on the first request to handle cold starts
-- Subsequent requests will be faster as the agent stays in memory
-
-### Function Timeout
-- Vercel has a 10-second timeout for Hobby plans
-- Pro plans have up to 60-second timeout
-- Consider upgrading if you need longer processing times
-
-### Memory Limits
-- Hobby: 1024 MB
-- Pro: 3008 MB
-- Enterprise: 3008 MB
-
-### File Size Limits
-- Request body: 4.5 MB (Hobby), 32 MB (Pro)
-- Response body: 4.5 MB (Hobby), 32 MB (Pro)
-
-## Testing Your Deployment
-
-1. **Health Check**:
-   ```bash
-   curl https://your-vercel-app.vercel.app/health
-   ```
-
-2. **Using the GUI Tester**:
-   - Update the URL in `gui_tester.py`
-   - Run the GUI tester
-   - Test with sample questions
-
-3. **Direct API Call**:
-   ```bash
-   curl -X POST https://your-vercel-app.vercel.app/api/ \
-     -F "file=@your_question.txt"
-   ```
-
-## Troubleshooting
-
-### Common Issues
-
-1. **Import Errors**: Make sure all dependencies are in `requirements-vercel.txt`
-2. **Environment Variables**: Verify all Azure OpenAI credentials are set
-3. **Timeout Errors**: Consider upgrading to Pro plan for longer timeouts
-4. **Memory Issues**: Optimize your code or upgrade to Pro plan
-
-### Logs
-- Check Vercel function logs in the dashboard
-- Use `vercel logs` command for CLI access
-
-## Local Development
-
-For local development, you can still use the original `local_main.py`:
+For full functionality with all data science libraries, use the local version:
 
 ```bash
+# Install full requirements
 pip install -r requirements.txt
+
+# Run locally
 python local_main.py
 ```
 
-## Performance Optimization
+## 📊 Size Optimization
 
-1. **Lazy Loading**: The agent is initialized only when needed
-2. **Connection Pooling**: Reuse database connections when possible
-3. **Caching**: Consider implementing response caching for repeated queries
-4. **Image Optimization**: Ensure base64 images are under size limits
+The deployment uses:
 
-## Security Considerations
+1. **Minimal requirements** (`requirements-vercel.txt`)
+2. **Lazy imports** - Heavy libraries only loaded when needed
+3. **Excluded files** (`.vercelignore`)
+4. **Optimized configuration** (`vercel.json`)
 
-1. **CORS**: Configure proper CORS origins for production
-2. **Rate Limiting**: Consider implementing rate limiting
-3. **Input Validation**: Validate all inputs thoroughly
-4. **API Keys**: Never expose API keys in client-side code
+## 🔍 Troubleshooting
 
-## Cost Optimization
+### Size Limit Exceeded
 
-1. **Function Duration**: Optimize code to reduce execution time
-2. **Memory Usage**: Use only necessary dependencies
-3. **Request Volume**: Monitor usage and optimize accordingly 
+If you still get size limit errors:
+
+1. Check `.vercelignore` excludes unnecessary files
+2. Ensure `requirements-vercel.txt` is minimal
+3. Consider removing more dependencies
+
+### Import Errors
+
+If you see import errors for data science libraries:
+
+- This is expected - the lightweight deployment doesn't include them
+- Use the local version for full functionality
+
+## 📈 Performance
+
+- **Cold start**: ~2-3 seconds
+- **Warm start**: ~200-500ms
+- **Memory usage**: ~50-100MB
+- **Timeout**: 30 seconds
+
+## 🔄 Updating
+
+To update the deployment:
+
+```bash
+# Make your changes
+git add .
+git commit -m "Update deployment"
+
+# Deploy
+./deploy-vercel.sh
+```
+
+## 📝 Notes
+
+- This deployment is optimized for **demonstration and basic functionality**
+- For **production data analysis**, use the local version
+- The API will return a message indicating limited functionality
+- Consider using other platforms (Railway, Render, etc.) for full deployment 

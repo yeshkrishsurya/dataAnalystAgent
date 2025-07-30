@@ -1,58 +1,23 @@
-import duckdb
 import pandas as pd
 import numpy as np
 import json
 from typing import Dict, List, Any, Union
-from scipy import stats
-from sklearn.linear_model import LinearRegression
-from sklearn.metrics import r2_score
 
 class DataTools:
     def __init__(self):
-        self.conn = duckdb.connect()
-        # Install and load required extensions
-        self._setup_duckdb()
-    
-    def _setup_duckdb(self):
-        """Setup DuckDB with required extensions"""
-        try:
-            self.conn.execute("INSTALL httpfs")
-            self.conn.execute("LOAD httpfs")
-            self.conn.execute("INSTALL parquet")
-            self.conn.execute("LOAD parquet")
-        except Exception as e:
-            print(f"Warning: Failed to setup DuckDB extensions: {e}")
+        # Remove DuckDB dependency for Vercel deployment
+        self.conn = None
+        print("DataTools initialized (lightweight version for Vercel)")
     
     def query_duckdb(self, query: str) -> str:
-        """Execute SQL query on DuckDB and return results as JSON"""
-        try:
-            result = self.conn.execute(query).fetchall()
-            columns = [desc[0] for desc in self.conn.description]
-            
-            # Convert to list of dictionaries
-            data = []
-            for row in result:
-                row_dict = {}
-                for i, value in enumerate(row):
-                    # Handle various data types
-                    if isinstance(value, (np.integer, np.floating)):
-                        value = value.item()
-                    elif pd.isna(value):
-                        value = None
-                    row_dict[columns[i]] = value
-                data.append(row_dict)
-            
-            return json.dumps({
-                "success": True,
-                "data": data,
-                "columns": columns,
-                "row_count": len(data)
-            })
-        except Exception as e:
-            return json.dumps({"error": f"SQL query failed: {str(e)}"})
+        """Placeholder for DuckDB queries - not available in lightweight deployment"""
+        return json.dumps({
+            "error": "DuckDB queries not available in this deployment",
+            "message": "Use local deployment for database functionality"
+        })
     
     def analyze_data(self, data_input: str) -> str:
-        """Perform statistical analysis on data"""
+        """Perform statistical analysis on data using pandas and numpy only"""
         try:
             # Parse input JSON
             input_data = json.loads(data_input)
@@ -69,24 +34,39 @@ class DataTools:
             
             if analysis_type == "describe":
                 # Basic descriptive statistics
-                results["description"] = df.describe().to_dict()
+                desc = df.describe()
+                results["description"] = {}
+                for col in desc.columns:
+                    results["description"][col] = {}
+                    for stat in desc.index:
+                        value = desc.loc[stat, col]
+                        if pd.isna(value):
+                            results["description"][col][stat] = None
+                        else:
+                            results["description"][col][stat] = float(value) if isinstance(value, (np.integer, np.floating)) else str(value)
+                
                 results["info"] = {
-                    "shape": df.shape,
+                    "shape": list(df.shape),
                     "columns": list(df.columns),
                     "dtypes": df.dtypes.astype(str).to_dict()
                 }
             
             elif analysis_type == "correlation":
-                # Correlation analysis
+                # Correlation analysis using pandas
                 numeric_cols = df.select_dtypes(include=[np.number]).columns
                 if len(numeric_cols) >= 2:
                     corr_matrix = df[numeric_cols].corr()
-                    results["correlation_matrix"] = corr_matrix.to_dict()
+                    results["correlation_matrix"] = {}
+                    for col1 in corr_matrix.columns:
+                        results["correlation_matrix"][col1] = {}
+                        for col2 in corr_matrix.columns:
+                            value = corr_matrix.loc[col1, col2]
+                            results["correlation_matrix"][col1][col2] = float(value) if not pd.isna(value) else None
                 else:
                     results["error"] = "Need at least 2 numeric columns for correlation"
             
             elif analysis_type == "regression":
-                # Linear regression analysis
+                # Simple linear regression using numpy
                 x_col = input_data.get("x_column")
                 y_col = input_data.get("y_column")
                 
@@ -100,40 +80,67 @@ class DataTools:
                 clean_data = df[[x_col, y_col]].dropna()
                 
                 if len(clean_data) < 2:
-                    return json.dumps({"error": "Insufficient data for regression"})
+                    return json.dumps({"error": "Not enough data points for regression"})
                 
-                X = clean_data[x_col].values.reshape(-1, 1)
+                x = clean_data[x_col].values
                 y = clean_data[y_col].values
                 
-                # Perform linear regression
-                model = LinearRegression()
-                model.fit(X, y)
+                # Simple linear regression using numpy
+                n = len(x)
+                x_mean = np.mean(x)
+                y_mean = np.mean(y)
                 
-                y_pred = model.predict(X)
-                r2 = r2_score(y, y_pred)
+                # Calculate coefficients
+                numerator = np.sum((x - x_mean) * (y - y_mean))
+                denominator = np.sum((x - x_mean) ** 2)
                 
-                # Calculate correlation coefficient
-                correlation = np.corrcoef(clean_data[x_col], clean_data[y_col])[0, 1]
+                if denominator == 0:
+                    return json.dumps({"error": "Cannot perform regression: x values are all the same"})
+                
+                slope = numerator / denominator
+                intercept = y_mean - slope * x_mean
+                
+                # Calculate R-squared
+                y_pred = slope * x + intercept
+                ss_res = np.sum((y - y_pred) ** 2)
+                ss_tot = np.sum((y - y_mean) ** 2)
+                r_squared = 1 - (ss_res / ss_tot) if ss_tot != 0 else 0
                 
                 results["regression"] = {
-                    "slope": float(model.coef_[0]),
-                    "intercept": float(model.intercept_),
-                    "r_squared": float(r2),
-                    "correlation": float(correlation),
-                    "data_points": len(clean_data)
+                    "slope": float(slope),
+                    "intercept": float(intercept),
+                    "r_squared": float(r_squared),
+                    "equation": f"y = {slope:.4f}x + {intercept:.4f}",
+                    "data_points": int(n)
                 }
             
-            elif analysis_type == "count":
-                # Count specific conditions
-                condition = input_data.get("condition", {})
-                if condition:
-                    filtered_df = df
-                    for col, value in condition.items():
-                        if col in df.columns:
-                            filtered_df = filtered_df[filtered_df[col] == value]
-                    results["count"] = len(filtered_df)
-                else:
-                    results["total_count"] = len(df)
+            elif analysis_type == "summary":
+                # Summary statistics
+                results["summary"] = {
+                    "total_rows": int(len(df)),
+                    "total_columns": int(len(df.columns)),
+                    "missing_values": df.isnull().sum().to_dict(),
+                    "data_types": df.dtypes.astype(str).to_dict()
+                }
+                
+                # Add basic stats for numeric columns
+                numeric_cols = df.select_dtypes(include=[np.number]).columns
+                if len(numeric_cols) > 0:
+                    results["summary"]["numeric_stats"] = {}
+                    for col in numeric_cols:
+                        col_data = df[col].dropna()
+                        if len(col_data) > 0:
+                            results["summary"]["numeric_stats"][col] = {
+                                "mean": float(np.mean(col_data)),
+                                "median": float(np.median(col_data)),
+                                "std": float(np.std(col_data)),
+                                "min": float(np.min(col_data)),
+                                "max": float(np.max(col_data)),
+                                "count": int(len(col_data))
+                            }
+            
+            else:
+                return json.dumps({"error": f"Unknown analysis type: {analysis_type}"})
             
             return json.dumps({
                 "success": True,
@@ -150,41 +157,50 @@ class DataTools:
             df = pd.DataFrame(data)
             
             for column, condition in filters.items():
-                if column not in df.columns:
-                    continue
-                
-                if isinstance(condition, dict):
-                    # Handle complex conditions
-                    if "gt" in condition:
-                        df = df[df[column] > condition["gt"]]
-                    if "lt" in condition:
-                        df = df[df[column] < condition["lt"]]
-                    if "eq" in condition:
-                        df = df[df[column] == condition["eq"]]
-                    if "contains" in condition:
-                        df = df[df[column].str.contains(condition["contains"], na=False)]
-                else:
-                    # Simple equality filter
-                    df = df[df[column] == condition]
+                if column in df.columns:
+                    if isinstance(condition, dict):
+                        if 'min' in condition:
+                            df = df[df[column] >= condition['min']]
+                        if 'max' in condition:
+                            df = df[df[column] <= condition['max']]
+                        if 'equals' in condition:
+                            df = df[df[column] == condition['equals']]
+                        if 'contains' in condition:
+                            df = df[df[column].astype(str).str.contains(condition['contains'], na=False)]
+                    else:
+                        # Simple equality filter
+                        df = df[df[column] == condition]
             
             return df.to_dict('records')
         except Exception as e:
-            return []
+            print(f"Error filtering data: {e}")
+            return data
     
     def clean_numeric_data(self, data: List[Dict], columns: List[str]) -> List[Dict]:
-        """Clean and convert data to numeric formats"""
+        """Clean numeric data by removing outliers and handling missing values"""
         try:
             df = pd.DataFrame(data)
             
-            for col in columns:
-                if col in df.columns:
-                    # Remove common formatting characters
-                    df[col] = df[col].astype(str)
-                    df[col] = df[col].str.replace(',', '')
-                    df[col] = df[col].str.replace('$', '')
-                    df[col] = df[col].str.replace('%', '')
-                    df[col] = df[col].str.extract(r'(\d+\.?\d*)').astype(float)
+            for column in columns:
+                if column in df.columns:
+                    # Convert to numeric, coercing errors to NaN
+                    df[column] = pd.to_numeric(df[column], errors='coerce')
+                    
+                    # Remove outliers using IQR method
+                    Q1 = df[column].quantile(0.25)
+                    Q3 = df[column].quantile(0.75)
+                    IQR = Q3 - Q1
+                    lower_bound = Q1 - 1.5 * IQR
+                    upper_bound = Q3 + 1.5 * IQR
+                    
+                    # Replace outliers with NaN
+                    df.loc[(df[column] < lower_bound) | (df[column] > upper_bound), column] = np.nan
+                    
+                    # Fill missing values with median
+                    median_val = df[column].median()
+                    df[column].fillna(median_val, inplace=True)
             
             return df.to_dict('records')
         except Exception as e:
+            print(f"Error cleaning numeric data: {e}")
             return data
